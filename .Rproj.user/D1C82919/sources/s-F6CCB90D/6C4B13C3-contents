@@ -57,17 +57,28 @@ set1 <- na.omit(data)
 summary(set1)
 
 # Set whit Age NA = mean
-set2 <-  data 
+set2 <- data 
 set2$Age[is.na(set2$Age)] <- mean(set2$Age, na.rm=T)
 summary(set2)
+
+# Set whit Age as numeric factor
+set3 <- data %>% mutate(Age = case_when(.$Age <= 10 ~ 1,
+                                        .$Age <= 20 ~ 2,
+                                        .$Age <= 30 ~ 3,
+                                        .$Age <= 40 ~ 4,
+                                        .$Age <= 50 ~ 5,
+                                        .$Age <= 60 ~ 6,
+                                        .$Age <= 70 ~ 7,
+                                        .$Age <= 80 ~ 8,
+                                        TRUE ~ 0))
 ##----------------END PROCESS DATA
   
 
 ##----------------START MODELS
-  
+
 ##----------------END MODELS
 
-
+summarsummar
 ##----------------START PREDICTION
 
 ##----------------END PREDICTION
