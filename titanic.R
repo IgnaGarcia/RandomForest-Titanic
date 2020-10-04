@@ -15,13 +15,13 @@
 library(readr) #To read .csv
 library(dplyr) #To use select(), subset(), mutate(), and others
 library(ranger) #To Random Forest optimised
-library(randomForest) 
 ##----------------END LIBRARIES
 
 
 start <- Sys.time()
 ##----------------START READ DATA
 data <- read_csv("train.csv")
+test <- read_csv("test.csv")
 # Survived: 0-No; 1-Yes
 # Pclass: 1-Upper; 2-Middle; 3-Lowe;
 # SibSp: number of siblings  or spouses on family relation
@@ -34,13 +34,18 @@ data <- read_csv("train.csv")
 str(data)
 summary(data)
 sapply(data, function(x) sum(is.na(x)))
+sapply(test, function(x) sum(is.na(x)))
 
 # Survived to factor
 data$Survived <- as.factor(data$Survived)
+test$Survived <- 0
 
 # Sex: 1-male; 2-female;
 data$Sexo <- 0
 data <- data %>% mutate(Sexo = case_when(.$Sex == "male" ~ 1,
+                                         .$Sex == "female" ~ 2))
+test$Sexo <- 0
+test <- test %>% mutate(Sexo = case_when(.$Sex == "male" ~ 1,
                                          .$Sex == "female" ~ 2))
 
 # Embarked: 1-Cherbourg; 2-Queenstown; 3-Southampton; 
@@ -48,32 +53,34 @@ data$Embark <- 0
 data <- data %>% mutate(Embark = case_when(.$Embarked == 'C' ~ 1,
                                            .$Embarked == 'Q' ~ 2,
                                            .$Embarked == 'S' ~ 3))
+test$Embark <- 0
+test <- test %>% mutate(Embark = case_when(.$Embarked == 'C' ~ 1,
+                                           .$Embarked == 'Q' ~ 2,
+                                           .$Embarked == 'S' ~ 3))
 
 # Less columns: -Name; -Ticket; -Cabin; -Sex; -Embarked; 
 data <- select(data, -c("Name", "Ticket","Cabin", "Sex", "Embarked"))
+test <- select(test, -c("Name", "Ticket","Cabin", "Sex", "Embarked"))
 
 # NAs treatment
 data <- subset(data, !is.na(data$Embark))
+test <- subset(test, !is.na(test$Embark))
 
-#Divide on train and test
-smp_size <- floor(0.70 * nrow(data))
-set.seed(123)
-train_aux <- sample(seq_len(nrow(data)), size = smp_size)
-#Train set and Test set
-train <- data[train_aux, ]
-test <- data[-train_aux, ]
 
 # Set whitout NA
-set1 <- na.omit(train)
+set1 <- na.omit(data)
+test1 <- na.omit(test)
 summary(set1)
 
 # Set whit Age NA = mean
-set2 <- train 
+set2 <- data 
 set2$Age[is.na(set2$Age)] <- mean(set2$Age, na.rm=T)
+test2 <- test 
+test2$Age[is.na(test2$Age)] <- mean(test2$Age, na.rm=T)
 summary(set2)
 
 # Set whit Age as numeric factor
-set3 <- train %>% mutate(Age = case_when(.$Age <= 10 ~ 1,
+set3 <- data %>% mutate(Age = case_when(.$Age <= 10 ~ 1,
                                         .$Age <= 20 ~ 2,
                                         .$Age <= 30 ~ 3,
                                         .$Age <= 40 ~ 4,
@@ -82,52 +89,86 @@ set3 <- train %>% mutate(Age = case_when(.$Age <= 10 ~ 1,
                                         .$Age <= 70 ~ 7,
                                         .$Age <= 80 ~ 8,
                                         TRUE ~ 0))
+test3 <- test %>% mutate(Age = case_when(.$Age <= 10 ~ 1,
+                                         .$Age <= 20 ~ 2,
+                                         .$Age <= 30 ~ 3,
+                                         .$Age <= 40 ~ 4,
+                                         .$Age <= 50 ~ 5,
+                                         .$Age <= 60 ~ 6,
+                                         .$Age <= 70 ~ 7,
+                                         .$Age <= 80 ~ 8,
+                                         TRUE ~ 0))
 ##----------------END PROCESS DATA
   
 
 ##----------------START MODELS
+model <- ranger( Survived ~ . , data= set1[,-1]
+                 , num.trees = 1000
+                 , mtry = 7
+                 , replace = F
+                 , importance = "impurity"
+                 , write.forest = T
+                 , probability = T
+                 , keep.inbag = T
+                 , alpha = 0.005
+)
 
-#Function to RF
-cores <- 4 #number of cores
-registerDoParallel(cores = cores)
 
-par <- function(model, numbTrees, numbVars){
-  foreach(ntree.iter = rep(ceiling(numbTrees / cores), cores), 
-          .combine = combine, .packages = "randomForest, ranger") %dopar% { 
-            ranger( Survived ~ . , data= set1[,-1]
-                    , num.trees = numbTrees
-                    , mtry = numbVars
-                    , importance = "impurity"
-                    , write.forest = T
-                    , probability = T
-                    , alpha = 0.005
-            )
-          }
+prediction <- predict(model, test1)
+mc <- with(test1, table(prediction, test1$Survived))
+
+### Set1
+vars1 <- 2
+results1 <- c(0)
+
+for(vars1 in 2:7){
+  model <- ranger( Survived ~ . , data= set1[,-1]
+          , num.trees = 1000
+          , mtry = vars1
+          , importance = "impurity"
+          , write.forest = T
+          , probability = T
+          , alpha = 0.005
+  )
+  results1[vars1-2] <- paste("\nVars: ", vars1, "; OOB: ", model$prediction.error)
 }
+cat("\nSet1:",results)
 
-accuracy=c(0)
-runs = 10
-qvar = 3
 
-for (qvar in 2:7) {
-  for(j in 1: runs){
-    
-    entrenamiento <- ozono[train_ind, ]
-    test          <- ozono[-train_ind, ]
-    modelo.forest <- par(entrenamiento, 600,qvar)  
-    prediccion <- predict(modelo.forest, test, type='class') 
-    
-    mc <- with(test,table(prediccion, test$clase))  # Matriz de Confusion
-    
-    #Calculo el % de  aciertos totales
-    aciertos <- sum(diag(mc)) / sum(mc) * 100
-    vAciertos_RF[j] = aciertos
-  }
-  cat( '\nNVariables: ', qvar)
-  cat(': Promedio: ',mean(vAciertos_RF),"% ")
-  cat( ' ( min: ', min(vAciertos_RF))
-  cat( ' ; max: ', max(vAciertos_RF), ") \n")
+### Set2
+vars2 <- 2
+results2 <- c(0)
+
+for(vars2 in 2:7){
+  model <- ranger( Survived ~ . , data= set2[,-1]
+                   , num.trees = 1000
+                   , mtry = vars2
+                   , importance = "impurity"
+                   , write.forest = T
+                   , probability = T
+                   , alpha = 0.005
+  )
+  results2[vars2-2] <- paste("\nVars: ", vars2, "; OOB: ", model$prediction.error)
 }
+cat("\nSet2:",results2)
+
+
+### Set2
+vars3 <- 2
+results3 <- c(0)
+
+for(vars3 in 2:7){
+  model <- ranger( Survived ~ . , data= set3[,-1]
+                   , num.trees = 1000
+                   , mtry = vars3
+                   , importance = "impurity"
+                   , write.forest = T
+                   , probability = T
+                   , alpha = 0.005
+  )
+  results3[vars3-2] <- paste("\nVars: ", vars3, "; OOB: ", model$prediction.error)
+}
+cat("\nSet3:",results3)
 ##----------------END MODELS
 
 
