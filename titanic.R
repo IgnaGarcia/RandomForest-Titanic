@@ -102,20 +102,18 @@ test3 <- test %>% mutate(Age = case_when(.$Age <= 10 ~ 1,
   
 
 ##----------------START MODELS
-model <- ranger( Survived ~ . , data= set1[,-1]
-                 , num.trees = 1000
-                 , mtry = 7
-                 , replace = F
-                 , importance = "impurity"
-                 , write.forest = T
-                 , probability = T
-                 , keep.inbag = T
-                 , alpha = 0.005
-)
-
-
-prediction <- predict(model, test1)
-mc <- with(test1, table(prediction, test1$Survived))
+# model <- ranger( Survived ~ . , data= set1[,-1]
+#                  , num.trees = 1000
+#                  , mtry = 7
+#                  , replace = F
+#                  , importance = "impurity"
+#                  , write.forest = T
+#                  , probability = T
+#                  , keep.inbag = T
+#                  , alpha = 0.005
+# )
+# prediction <- predict(model, test1)
+# mc <- with(test1, table(prediction, test1$Survived))
 
 ### Set1
 vars1 <- 2
@@ -132,7 +130,16 @@ for(vars1 in 2:7){
   )
   results1[vars1-2] <- paste("\nVars: ", vars1, "; OOB: ", model$prediction.error)
 }
-cat("\nSet1:",results)
+cat("\nSet1:",results1) #With 3 Vars got the min OOB
+
+model1 <- ranger( Survived ~ . , data= set1[,-1]
+                  , num.trees = 1000
+                  , mtry = 3
+                  , importance = "impurity"
+                  , write.forest = T
+                  , probability = T
+                  , alpha = 0.005
+) #OOB: 0.1322607
 
 
 ### Set2
@@ -150,10 +157,19 @@ for(vars2 in 2:7){
   )
   results2[vars2-2] <- paste("\nVars: ", vars2, "; OOB: ", model$prediction.error)
 }
-cat("\nSet2:",results2)
+cat("\nSet2:",results2) #With 3 Vars got the min OOB
+
+model2 <- ranger( Survived ~ . , data= set2[,-1]
+                  , num.trees = 1000
+                  , mtry = 3
+                  , importance = "impurity"
+                  , write.forest = T
+                  , probability = T
+                  , alpha = 0.005
+) #OOB: 0.1260643
 
 
-### Set2
+### Set3
 vars3 <- 2
 results3 <- c(0)
 
@@ -168,12 +184,22 @@ for(vars3 in 2:7){
   )
   results3[vars3-2] <- paste("\nVars: ", vars3, "; OOB: ", model$prediction.error)
 }
-cat("\nSet3:",results3)
+cat("\nSet3:",results3) #With 3 Vars got the min OOB
+
+model3 <- ranger( Survived ~ . , data= set3[,-1]
+                  , num.trees = 1000
+                  , mtry = 3
+                  , importance = "impurity"
+                  , write.forest = T
+                  , probability = T
+                  , alpha = 0.005
+) #OOB: 0.1267627
+
 ##----------------END MODELS
 
 
 ##----------------START PREDICTION
-predm1s1 <- predict(m1s1, data = test)
+#predm1s1 <- predict(m1s1, data = test)
 ##----------------END PREDICTION
 
 totalTime <- Sys.time() - start
