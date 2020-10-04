@@ -34,23 +34,32 @@ sapply(data, function(x) sum(is.na(x)))
 
 # Survived to factor
 data$Survived <- as.factor(data$Survived)
+
 # Sex: 1-male; 2-female;
 data$Sexo <- 0
 data <- data %>% mutate(Sexo = case_when(.$Sex == "male" ~ 1,
                                          .$Sex == "female" ~ 2))
+
 # Embarked: 1-Cherbourg; 2-Queenstown; 3-Southampton; 
 data$Embark <- 0
 data <- data %>% mutate(Embark = case_when(.$Embarked == 'C' ~ 1,
                                            .$Embarked == 'Q' ~ 2,
                                            .$Embarked == 'S' ~ 3))
+
 # Less columns: -Name; -Ticket; -Cabin; -Sex; -Embarked; 
 data <- select(data, -c("Name", "Ticket","Cabin", "Sex", "Embarked"))
 
-# NAs treatement
+# NAs treatment
 data <- subset(data, !is.na(data$Embark))
 
 # Set whitout NA
 set1 <- na.omit(data)
+summary(set1)
+
+# Set whit Age NA = mean
+set2 <-  data 
+set2$Age[is.na(set2$Age)] <- mean(set2$Age, na.rm=T)
+summary(set2)
 ##----------------END PROCESS DATA
   
 
