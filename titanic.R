@@ -223,20 +223,20 @@ model31 <- ranger( Survived ~ . , data= set3[,-1]
 
 
 ##----------------START PREDICTION
-## Set1
+## Set1 - Is Useless
 preds1 <- predict(model11, data = test1)
-test1$Survived <- preds1$predictions
-write.csv2 (select(test1, PassengerId, Survived), 'submission1.csv' ,fileEncoding= "UTF-8",row.names= T)
+test1$Survived <- as.numeric(as.character(preds1$predictions))
+write.csv (select(test1, PassengerId, Survived), 'submission1.csv' ,fileEncoding= "UTF-8",row.names= F)
 
 ## Set2
 preds2 <- predict(model21, test2)
-test2$Survived <- preds2$predictions
-write.csv2 (select(test2, PassengerId, Survived), 'submission2.csv' ,fileEncoding= "UTF-8",row.names= T)
+test2$Survived <- as.numeric(as.character(preds2$predictions))
+write.csv (select(test2, PassengerId, Survived), 'submission2.csv' ,fileEncoding= "UTF-8",row.names= F)
 
 ## Set3
 preds3 <- predict(model31, data = test3)
-test2$Survived <- preds3$predictions
-write.csv2 (select(test3, PassengerId, Survived), 'submission3.csv' ,fileEncoding= "UTF-8",row.names= T)
+test2$Survived <- as.numeric(as.character(preds3$predictions))
+write.csv (select(test3, PassengerId, Survived), 'submission3.csv' ,fileEncoding= "UTF-8",row.names= F)
 
 ##----------------END PREDICTION
 
