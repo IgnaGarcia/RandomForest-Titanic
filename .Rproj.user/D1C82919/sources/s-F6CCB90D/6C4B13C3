@@ -3,7 +3,7 @@
     "path": "C:/work/Explotacion/TitanicCompet/titanic.R",
     "project_path": "titanic.R",
     "type": "r_source",
-    "hash": "3604169998",
+    "hash": "3386290660",
     "contents": "",
     "dirty": false,
     "created": 1601770625873.0,
@@ -11,15 +11,15 @@
     "relative_order": 1,
     "properties": {
         "tempName": "Untitled1",
-        "cursorPosition": "73,0",
-        "scrollLine": "56"
+        "cursorPosition": "75,13",
+        "scrollLine": "75"
     },
     "folds": "",
-    "lastKnownWriteTime": 1601784827,
+    "lastKnownWriteTime": 1601791660,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1601784827776,
+    "last_content_update": 1601791660387,
     "read_only": false,
     "read_only_alternatives": []
 }
