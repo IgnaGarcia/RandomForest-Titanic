@@ -15,6 +15,7 @@
 library(readr) #To read .csv
 library(dplyr) #To use select(), subset(), mutate(), and others
 library(ranger) #To Random Forest optimised
+library(pROC)
 ##----------------END LIBRARIES
 
 
@@ -65,7 +66,7 @@ test <- select(test, -c("Name", "Ticket","Cabin", "Sex", "Embarked"))
 # NAs treatment
 data <- subset(data, !is.na(data$Embark))
 test <- subset(test, !is.na(test$Embark))
-
+test$Fare[is.na(test$Fare)] <- 0
 
 # Set whitout NA
 set1 <- na.omit(data)
@@ -102,20 +103,7 @@ test3 <- test %>% mutate(Age = case_when(.$Age <= 10 ~ 1,
   
 
 ##----------------START MODELS
-# model <- ranger( Survived ~ . , data= set1[,-1]
-#                  , num.trees = 1000
-#                  , mtry = 7
-#                  , replace = F
-#                  , importance = "impurity"
-#                  , write.forest = T
-#                  , probability = T
-#                  , keep.inbag = T
-#                  , alpha = 0.005
-# )
-# prediction <- predict(model, test1)
-# mc <- with(test1, table(prediction, test1$Survived))
-
-### Set1
+###---------- Set1
 vars1 <- 2
 results1 <- c(0)
 
@@ -141,8 +129,20 @@ model1 <- ranger( Survived ~ . , data= set1[,-1]
                   , alpha = 0.005
 ) #OOB: 0.1322607
 
+roc1 <- roc(set1$Survived, model1$predictions[,2], percetnt= T, auc= T, ci= T, plot= T)
+plot.roc(roc1, legacy.axes= T, print.thres= "best", print.auc= T)
 
-### Set2
+model11 <- ranger( Survived ~ . , data= set1[,-1]
+                   , num.trees = 1000
+                   , mtry = 3
+                   , importance = "impurity"
+                   , write.forest = T
+                   , probability = F
+                   , alpha = 0.005
+)
+
+
+###---------- Set2
 vars2 <- 2
 results2 <- c(0)
 
@@ -168,8 +168,20 @@ model2 <- ranger( Survived ~ . , data= set2[,-1]
                   , alpha = 0.005
 ) #OOB: 0.1260643
 
+roc2 <- roc(set2$Survived, model2$predictions[,2], percetnt= T, auc= T, ci= T, plot= T)
+plot.roc(roc2, legacy.axes= T, print.thres= "best", print.auc= T)
 
-### Set3
+model21 <- ranger( Survived ~ . , data= set2[,-1]
+                  , num.trees = 1000
+                  , mtry = 3
+                  , importance = "impurity"
+                  , write.forest = T
+                  , probability = F
+                  , alpha = 0.005
+)
+
+
+###---------- Set3
 vars3 <- 2
 results3 <- c(0)
 
@@ -195,11 +207,33 @@ model3 <- ranger( Survived ~ . , data= set3[,-1]
                   , alpha = 0.005
 ) #OOB: 0.1267627
 
+roc3 <- roc(set3$Survived, model3$predictions[,2], percetnt= T, auc= T, ci= T, plot= T)
+plot.roc(roc3, legacy.axes= T, print.thres= "best", print.auc= T)
+
+model31 <- ranger( Survived ~ . , data= set3[,-1]
+                   , num.trees = 1000
+                   , mtry = 3
+                   , importance = "impurity"
+                   , write.forest = T
+                   , probability = F
+                   , alpha = 0.005
+)
+
 ##----------------END MODELS
 
 
 ##----------------START PREDICTION
-#predm1s1 <- predict(m1s1, data = test)
+preds1 <- predict(model1, data = test1)
+test1$Survived <- preds1$predictions
+write.csv2 (test, 'submission1.csv' ,fileEncoding= "UTF-8",row.names= T)
+
+preds2 <- predict(model21, test2)
+test2$Survived <- preds$predictions
+write.csv2 (test, 'submission2.csv' ,fileEncoding= "UTF-8",row.names= T)
+
+preds3 <- predict(model3, data = test2)
+write.csv2 (test, 'submission3.csv' ,fileEncoding= "UTF-8",row.names= T)
+
 ##----------------END PREDICTION
 
 totalTime <- Sys.time() - start
