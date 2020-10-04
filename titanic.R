@@ -223,16 +223,20 @@ model31 <- ranger( Survived ~ . , data= set3[,-1]
 
 
 ##----------------START PREDICTION
-preds1 <- predict(model1, data = test1)
+## Set1
+preds1 <- predict(model11, data = test1)
 test1$Survived <- preds1$predictions
-write.csv2 (test, 'submission1.csv' ,fileEncoding= "UTF-8",row.names= T)
+write.csv2 (select(test1, PassengerId, Survived), 'submission1.csv' ,fileEncoding= "UTF-8",row.names= T)
 
+## Set2
 preds2 <- predict(model21, test2)
-test2$Survived <- preds$predictions
-write.csv2 (test, 'submission2.csv' ,fileEncoding= "UTF-8",row.names= T)
+test2$Survived <- preds2$predictions
+write.csv2 (select(test2, PassengerId, Survived), 'submission2.csv' ,fileEncoding= "UTF-8",row.names= T)
 
-preds3 <- predict(model3, data = test2)
-write.csv2 (test, 'submission3.csv' ,fileEncoding= "UTF-8",row.names= T)
+## Set3
+preds3 <- predict(model31, data = test3)
+test2$Survived <- preds3$predictions
+write.csv2 (select(test3, PassengerId, Survived), 'submission3.csv' ,fileEncoding= "UTF-8",row.names= T)
 
 ##----------------END PREDICTION
 
